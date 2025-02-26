@@ -53,7 +53,7 @@ export default function App() {
 	}, [query])
 
 	const handleSelectCharacter = id => {
-		setSelectedId(id)
+		setSelectedId(prevId => (prevId === id ? null : id))
 	}
 
 	return (
@@ -68,6 +68,7 @@ export default function App() {
 					characters={characters}
 					isLoading={isLoading}
 					onSelectCharacter={handleSelectCharacter}
+					selectedId={selectedId}
 				/>
 				<CharacterDetail selectedId={selectedId} />
 			</Main>

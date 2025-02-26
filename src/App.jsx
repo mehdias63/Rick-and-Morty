@@ -1,4 +1,8 @@
-import Navbar, { Search, SearchResult } from './components/Navbar'
+import Navbar, {
+	Search,
+	SearchResult,
+	Favorites,
+} from './components/Navbar'
 import CharacterList from './components/CharacterList'
 import CharacterDetail from './components/CharacterDetail'
 import toast, { Toaster } from 'react-hot-toast'
@@ -11,6 +15,7 @@ export default function App() {
 	const [isLoading, setIsLoading] = useState(false)
 	const [query, setQuery] = useState('')
 	const [selectedId, setSelectedId] = useState(null)
+	const [favorites, setFavorites] = useState([])
 
 	// useEffect(() => {
 	// async function fetchData() {
@@ -35,26 +40,42 @@ export default function App() {
 	// }, [])
 
 	useEffect(() => {
+		const controller = new AbortController()
+		const signal = controller.signal
 		async function fetchData() {
 			try {
 				setIsLoading(true)
 				const { data } = await axios.get(
 					`https://rickandmortyapi.com/api/character/?name=${query}`,
+					{ signal },
 				)
 				setCharacters(data.results.slice(0, 6))
 			} catch (err) {
-				setCharacters([])
-				toast.error(err.response.data.error)
+				if (!axios.isCancel()) {
+					setCharacters([])
+					toast.error(err.response.data.error)
+				}
 			} finally {
 				setIsLoading(false)
 			}
 		}
 		fetchData()
+		return () => {
+			controller.abort()
+		}
 	}, [query])
 
 	const handleSelectCharacter = id => {
 		setSelectedId(prevId => (prevId === id ? null : id))
 	}
+
+	const handleAddFavorite = char => {
+		setFavorites(prevFav => [...prevFav, char])
+	}
+
+	const isAddToFavorite = favorites
+		.map(fav => fav.id)
+		.includes(selectedId)
 
 	return (
 		<div className="app">
@@ -62,6 +83,7 @@ export default function App() {
 			<Navbar>
 				<Search query={query} setQuery={setQuery} />
 				<SearchResult numOfResult={characters.length} />
+				<Favorites numOfFavorites={favorites.length} />
 			</Navbar>
 			<Main>
 				<CharacterList
@@ -70,7 +92,11 @@ export default function App() {
 					onSelectCharacter={handleSelectCharacter}
 					selectedId={selectedId}
 				/>
-				<CharacterDetail selectedId={selectedId} />
+				<CharacterDetail
+					selectedId={selectedId}
+					onAddFavorite={handleAddFavorite}
+					isAddToFavorite={isAddToFavorite}
+				/>
 			</Main>
 		</div>
 	)

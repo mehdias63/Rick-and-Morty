@@ -9,13 +9,16 @@ import toast, { Toaster } from 'react-hot-toast'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import './App.css'
+import Modal from './components/Modal'
 
 export default function App() {
 	const [characters, setCharacters] = useState([])
 	const [isLoading, setIsLoading] = useState(false)
 	const [query, setQuery] = useState('')
 	const [selectedId, setSelectedId] = useState(null)
-	const [favorites, setFavorites] = useState([])
+	const [favorites, setFavorites] = useState(
+		() => JSON.parse(localStorage.getItem('FAVORITES')) || [],
+	)
 
 	// useEffect(() => {
 	// async function fetchData() {
@@ -65,12 +68,19 @@ export default function App() {
 		}
 	}, [query])
 
+	useEffect(() => {
+		localStorage.setItem('FAVORITES', JSON.stringify(favorites))
+	}, [favorites])
+
 	const handleSelectCharacter = id => {
 		setSelectedId(prevId => (prevId === id ? null : id))
 	}
 
 	const handleAddFavorite = char => {
 		setFavorites(prevFav => [...prevFav, char])
+	}
+	const handleDeleteFavorite = id => {
+		setFavorites(prevFav => prevFav.filter(fav => fav.id !== id))
 	}
 
 	const isAddToFavorite = favorites
@@ -80,10 +90,14 @@ export default function App() {
 	return (
 		<div className="app">
 			<Toaster />
+			<Modal>This is test</Modal>
 			<Navbar>
 				<Search query={query} setQuery={setQuery} />
 				<SearchResult numOfResult={characters.length} />
-				<Favorites numOfFavorites={favorites.length} />
+				<Favorites
+					favorites={favorites}
+					onDeleteFavorite={handleDeleteFavorite}
+				/>
 			</Navbar>
 			<Main>
 				<CharacterList

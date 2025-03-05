@@ -10,15 +10,14 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 import './App.css'
 import Modal from './components/Modal'
+import useCharacters from './hooks/useCharacters'
+import useLocalStorage from './hooks/useLocalStorage'
 
 export default function App() {
-	const [characters, setCharacters] = useState([])
-	const [isLoading, setIsLoading] = useState(false)
 	const [query, setQuery] = useState('')
+	const { isLoading, characters } = useCharacters(query)
 	const [selectedId, setSelectedId] = useState(null)
-	const [favorites, setFavorites] = useState(
-		() => JSON.parse(localStorage.getItem('FAVORITES')) || [],
-	)
+	const [favorites, setFavorites] = useLocalStorage('FAVORITES', [])
 
 	// useEffect(() => {
 	// async function fetchData() {
@@ -41,36 +40,6 @@ export default function App() {
 	// }
 	// fetchData()
 	// }, [])
-
-	useEffect(() => {
-		const controller = new AbortController()
-		const signal = controller.signal
-		async function fetchData() {
-			try {
-				setIsLoading(true)
-				const { data } = await axios.get(
-					`https://rickandmortyapi.com/api/character/?name=${query}`,
-					{ signal },
-				)
-				setCharacters(data.results.slice(0, 6))
-			} catch (err) {
-				if (!axios.isCancel()) {
-					setCharacters([])
-					toast.error(err.response.data.error)
-				}
-			} finally {
-				setIsLoading(false)
-			}
-		}
-		fetchData()
-		return () => {
-			controller.abort()
-		}
-	}, [query])
-
-	useEffect(() => {
-		localStorage.setItem('FAVORITES', JSON.stringify(favorites))
-	}, [favorites])
 
 	const handleSelectCharacter = id => {
 		setSelectedId(prevId => (prevId === id ? null : id))
